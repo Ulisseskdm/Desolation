@@ -1,0 +1,166 @@
+from ast import Pass
+from re import X
+import re
+from tkinter import Y
+from turtle import right
+import pygame
+import random
+import math
+pygame.init()
+
+#screen
+screen = pygame.display.set_mode((1000, 800))
+
+#wallpaper
+background = pygame.image.load("space.png")
+
+#title
+pygame.display.set_caption("Desolation")
+icon = pygame.image.load("spaceship.png")
+pygame.display.set_icon(icon)
+
+# Rocket
+Rocket = pygame.image.load("rocket.png")
+RocketX = 425
+RocketY = 700
+RocketY_change = 0
+RocketX_change = 0
+
+# Alien
+Alien = []
+AlienX = []
+AlienY = []
+AlienX_change = []
+AlienY_change = []
+invasion_count = 6
+
+for i in range(invasion_count):
+    Alien.append(pygame.image.load("alien.png"))
+    AlienX.append(random.randint(50,900))
+    AlienY.append(random.randint(25,75))
+    AlienX_change.append(0.4)
+    AlienY_change.append(0.04)
+
+# Bullet /ready means can't see the bullet
+Bullet = pygame.image.load("bullet.png")
+BulletX = 0
+BulletY = 700
+BulletX_change = 0
+BulletY_change = 2
+Bullet_state = "ready"
+
+#score
+
+score_value = 0
+font = pygame.font.Font('freesansbold.ttf',32)
+
+textX = 10
+textY = 10
+
+#game over
+
+score_value = 0
+end_font = pygame.font.Font('freesansbold.ttf',64)
+
+
+
+def show_score(x,y):
+    score = font.render("score :" + str(score_value), True, (30,255,30))
+    screen.blit(score, (x, y))
+
+def End_text(x,y):
+    End_text = font.render("GAME OVER!", True, (30,255,30))
+    screen.blit(End_text, (400, 350))
+
+def rocket(x, y):
+    screen.blit(Rocket, (x, y))
+
+def alien(x, y, i):
+    screen.blit(Alien[i], (x, y))
+
+def fire_Bullet(x, y):
+    global Bullet_state
+    Bullet_state = "fire"
+    screen.blit(Bullet, (x+45, y-10)) 
+
+def isCollision(AlienX, AlienY, BulletX, BulletY):
+    distance = math.sqrt((math.pow((AlienX-30)-BulletX, 2)) + (math.pow(AlienY-BulletY,2)))
+    if distance < 30:
+        return True
+    else:
+        return False
+
+# game loop
+running = True
+while running:
+
+    #screen color
+    screen.fill((0, 0, 25))
+    screen.blit(background, (0,0))
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    #controls
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_LEFT:
+            RocketX_change = -0.5
+        if event.key == pygame.K_RIGHT:
+            RocketX_change = 0.5
+        if event.key == pygame.K_UP:
+            if Bullet_state is "ready":
+                BulletX = RocketX
+                fire_Bullet(RocketX,BulletY)
+
+    if event.type == pygame.KEYUP:
+        if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
+            RocketX_change = 0
+#player
+    RocketX += RocketX_change
+    if RocketX <= -36:
+        RocketX = -36
+    elif RocketX >=936:
+        RocketX = 936
+#alien
+    for i in range(invasion_count):
+
+        if AlienY[i] > 800:
+            for j in range(invasion_count):
+                Alien[j] = 2000
+            End_text(400,350)
+            break
+
+        AlienX[i] += AlienX_change[i]
+        AlienY[i] += AlienY_change[i]
+        if AlienX[i] <= 0:
+            AlienX_change[i] = 0.4
+        elif AlienX[i] >=936:
+            AlienX_change[i] = -0.4
+
+    #collision
+        collision = isCollision(AlienX[i], AlienY[i], BulletX, BulletY)
+        if collision:
+            BulletY = 700
+            Bullet_state = "ready"
+            score_value += 1
+            print(score_value)
+            AlienX[i] = random.randint(50,900)
+            AlienY[i] = random.randint(50,75)
+
+        alien(AlienX[i], AlienY[i], i)
+
+    #Bullet movement
+    if BulletY <= 0:
+        BulletY = 700
+        Bullet_state = "ready"
+    
+    if Bullet_state is "fire":
+        fire_Bullet(BulletX,BulletY)
+        BulletY -= BulletY_change
+    
+    
+    
+
+    rocket(RocketX, RocketY)
+    show_score(textX, textY)
+    pygame.display.update()
